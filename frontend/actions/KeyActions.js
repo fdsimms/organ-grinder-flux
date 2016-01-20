@@ -7,6 +7,10 @@ var KeyActions = {
 
   keyUnpressed: function (key) {
     AppDispatcher.dispatch({ noteName: key, actionType: "REMOVE_KEY" });
+  },
+
+  unpressKeys: function (keys) {
+    AppDispatcher.dispatch({keys: keys, actionType: "REMOVE_KEYS"});
   }
 };
 

@@ -1,7 +1,8 @@
 var React = require('react'),
     ReactDOM = require('react-dom'),
     Key = require('./Key'),
-    Tones = require('../constants/Tones');
+    Tones = require('../constants/Tones'),
+    Recorder = require('../components/Recorder');
 
 var Organ = React.createClass({
   render: function () {
@@ -12,9 +13,12 @@ var Organ = React.createClass({
 
 
     return(
-      <ul className="organ">
-        {keys}
-      </ul>
+      <div>
+        <ul className="organ">
+          {keys}
+        </ul>
+        <Recorder className="recorder" />
+      </div>
     );
   }
 });

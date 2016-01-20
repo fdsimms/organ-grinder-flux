@@ -20050,6 +20050,10 @@
 	
 	  keyUnpressed: function (key) {
 	    AppDispatcher.dispatch({ noteName: key, actionType: "REMOVE_KEY" });
+	  },
+	
+	  unpressKeys: function (keys) {
+	    AppDispatcher.dispatch({ keys: keys, actionType: "REMOVE_KEYS" });
 	  }
 	};
 	
@@ -20079,6 +20083,14 @@
 	  KeyStore.__emitChange();
 	};
 	
+	var removeKeys = function (keys) {
+	  keys.forEach(function (key) {
+	    var idx = _currentKeys.indexOf(key);
+	    _currentKeys.splice(idx, 1);
+	  });
+	  KeyStore.__emitChange();
+	};
+	
 	KeyStore.all = function () {
 	  return _currentKeys.slice();
 	};
@@ -20088,6 +20100,8 @@
 	    addKey(payload.noteName);
 	  } else if (payload.actionType === "REMOVE_KEY") {
 	    removeKey(payload.noteName);
+	  } else if (payload.actionType === "REMOVE_KEYS") {
+	    removeKeys(payload.keys);
 	  }
 	};
 	
@@ -26622,7 +26636,8 @@
 	var React = __webpack_require__(6),
 	    ReactDOM = __webpack_require__(162),
 	    Key = __webpack_require__(185),
-	    Tones = __webpack_require__(186);
+	    Tones = __webpack_require__(186),
+	    Recorder = __webpack_require__(188);
 	
 	var Organ = React.createClass({
 	  displayName: 'Organ',
@@ -26634,14 +26649,167 @@
 	    });
 	
 	    return React.createElement(
-	      'ul',
-	      { className: 'organ' },
-	      keys
+	      'div',
+	      null,
+	      React.createElement(
+	        'ul',
+	        { className: 'organ' },
+	        keys
+	      ),
+	      React.createElement(Recorder, { className: 'recorder' })
 	    );
 	  }
 	});
 	
 	module.exports = Organ;
+
+/***/ },
+/* 188 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(6),
+	    ReactDOM = __webpack_require__(162),
+	    Track = __webpack_require__(189);
+	KeyStore = __webpack_require__(167);
+	
+	var Recorder = React.createClass({
+	  displayName: 'Recorder',
+	
+	  getInitialState: function () {
+	    return { isRecording: false, track: new Track({}) };
+	  },
+	
+	  componentDidMount: function () {
+	    KeyStore.addListener(this._keysChanged);
+	  },
+	
+	  _keysChanged: function () {
+	    this.state.track.addNotes(KeyStore.all());
+	  },
+	
+	  handleRecordClick: function () {
+	    this.state.track.startRecording();
+	    this.setState({ isRecording: true });
+	  },
+	
+	  handleStopClick: function () {
+	    this.state.track.stopRecording();
+	    this.setState({ isRecording: false });
+	  },
+	
+	  handlePlayClick: function () {
+	    if (this.state.isRecording) {
+	      this.handleStopClick();
+	    }
+	
+	    this.state.track.play();
+	  },
+	
+	  render: function () {
+	    var recordButton;
+	    if (this.state.isRecording) {
+	      recordButton = React.createElement(
+	        'button',
+	        { onClick: this.handleStopClick },
+	        'Stop'
+	      );
+	    } else {
+	      recordButton = React.createElement(
+	        'button',
+	        { onClick: this.handleRecordClick },
+	        'Record'
+	      );
+	    }
+	
+	    return React.createElement(
+	      'div',
+	      { className: 'buttons' },
+	      recordButton,
+	      React.createElement(
+	        'button',
+	        { onClick: this.handlePlayClick },
+	        'Play'
+	      )
+	    );
+	  }
+	
+	});
+	
+	module.exports = Recorder;
+
+/***/ },
+/* 189 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var KeyStore = __webpack_require__(167);
+	var KeyActions = __webpack_require__(166);
+	
+	var Track = function (attributes) {
+	  this.name = attributes.name;
+	  this.roll = attributes.roll || [];
+	};
+	
+	Track.prototype.startRecording = function () {
+	  this.roll = [];
+	
+	  this.currentTime = Date.now();
+	};
+	
+	Track.prototype.addNotes = function (notes) {
+	  notes = notes || KeyStore.all();
+	  var timeslice = Date.now() - this.currentTime;
+	  var notesTimeslice = { timeslice: timeslice, notes: notes };
+	  this.roll.push(notesTimeslice);
+	};
+	
+	Track.prototype.stopRecording = function () {
+	  this.addNotes([]);
+	};
+	
+	Track.prototype.play = function () {
+	  var that = this;
+	
+	  if (this.interval) {
+	    return;
+	  }
+	
+	  var playbackStartTime = Date.now();
+	  var currentNote = 0;
+	
+	  function playStep() {
+	
+	    if (currentNote < that.roll.length) {
+	      // all notes in roll, ensure they are in KeyStore
+	      that.roll[currentNote].notes.forEach(function (note) {
+	        KeyActions.keyPressed(note);
+	      });
+	
+	      if (Date.now() - playbackStartTime > that.roll[currentNote].timeslice) {
+	        var nextNote = currentNote + 1;
+	        var nextKeys = that.roll[nextNote].notes;
+	        var keys = [];
+	
+	        that.roll[currentNote].notes.forEach(function (note) {
+	          if (!nextKeys.includes(note)) {
+	            keys.push(note);
+	          }
+	        });
+	
+	        KeyActions.unpressKeys(keys);
+	
+	        currentNote++;
+	      }
+	    } else {
+	      debugger;
+	      clearInterval(that.interval);
+	      delete that.interval;
+	    }
+	  }
+	
+	  this.interval = setInterval(playStep, 10);
+	};
+	
+	module.exports = Track;
 
 /***/ }
 /******/ ]);

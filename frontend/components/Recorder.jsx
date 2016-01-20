@@ -9,20 +9,22 @@ var Recorder = React.createClass({
     return({ isRecording: false, track: new Track({})});
   },
 
-  componentDidMount: function () {
-    KeyStore.addListener(this._keysChanged);
-  },
+  // componentDidMount: function () {
+  //   KeyStore.addListener(this._keysChanged);
+  // },
 
   _keysChanged: function () {
     this.state.track.addNotes(KeyStore.all());
   },
 
   handleRecordClick: function () {
+    this.listenerToken = KeyStore.addListener(this._keysChanged);
     this.state.track.startRecording();
     this.setState({isRecording: true});
   },
 
   handleStopClick: function () {
+    this.listenerToken.remove(this._keysChanged);
     this.state.track.stopRecording();
     this.setState({isRecording: false});
   },
@@ -31,7 +33,7 @@ var Recorder = React.createClass({
     if (this.state.isRecording) {
       this.handleStopClick();
     }
-    
+
     this.state.track.play();
   },
 

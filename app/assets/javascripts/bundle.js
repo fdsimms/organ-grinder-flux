@@ -20052,8 +20052,8 @@
 	    AppDispatcher.dispatch({ noteName: key, actionType: "REMOVE_KEY" });
 	  },
 	
-	  unpressKeys: function (keys) {
-	    AppDispatcher.dispatch({ keys: keys, actionType: "REMOVE_KEYS" });
+	  unpressAllKeys: function () {
+	    AppDispatcher.dispatch({ actionType: "REMOVE_ALL_KEYS" });
 	  }
 	};
 	
@@ -20083,11 +20083,8 @@
 	  KeyStore.__emitChange();
 	};
 	
-	var removeKeys = function (keys) {
-	  keys.forEach(function (key) {
-	    var idx = _currentKeys.indexOf(key);
-	    _currentKeys.splice(idx, 1);
-	  });
+	var removeAllKeys = function () {
+	  _currentKeys = [];
 	  KeyStore.__emitChange();
 	};
 	
@@ -20100,8 +20097,8 @@
 	    addKey(payload.noteName);
 	  } else if (payload.actionType === "REMOVE_KEY") {
 	    removeKey(payload.noteName);
-	  } else if (payload.actionType === "REMOVE_KEYS") {
-	    removeKeys(payload.keys);
+	  } else if (payload.actionType === "REMOVE_ALL_KEYS") {
+	    removeAllKeys();
 	  }
 	};
 	
@@ -26679,20 +26676,22 @@
 	    return { isRecording: false, track: new Track({}) };
 	  },
 	
-	  componentDidMount: function () {
-	    KeyStore.addListener(this._keysChanged);
-	  },
+	  // componentDidMount: function () {
+	  //   KeyStore.addListener(this._keysChanged);
+	  // },
 	
 	  _keysChanged: function () {
 	    this.state.track.addNotes(KeyStore.all());
 	  },
 	
 	  handleRecordClick: function () {
+	    this.listenerToken = KeyStore.addListener(this._keysChanged);
 	    this.state.track.startRecording();
 	    this.setState({ isRecording: true });
 	  },
 	
 	  handleStopClick: function () {
+	    this.listenerToken.remove(this._keysChanged);
 	    this.state.track.stopRecording();
 	    this.setState({ isRecording: false });
 	  },
@@ -26756,7 +26755,7 @@
 	};
 	
 	Track.prototype.addNotes = function (notes) {
-	  notes = notes || KeyStore.all();
+	  notes = notes;
 	  var timeslice = Date.now() - this.currentTime;
 	  var notesTimeslice = { timeslice: timeslice, notes: notes };
 	  this.roll.push(notesTimeslice);
@@ -26779,34 +26778,24 @@
 	  function playStep() {
 	
 	    if (currentNote < that.roll.length) {
+	      // debugger
 	      // all notes in roll, ensure they are in KeyStore
 	      that.roll[currentNote].notes.forEach(function (note) {
 	        KeyActions.keyPressed(note);
 	      });
 	
 	      if (Date.now() - playbackStartTime > that.roll[currentNote].timeslice) {
-	        var nextNote = currentNote + 1;
-	        var nextKeys = that.roll[nextNote].notes;
-	        var keys = [];
-	
-	        that.roll[currentNote].notes.forEach(function (note) {
-	          if (!nextKeys.includes(note)) {
-	            keys.push(note);
-	          }
-	        });
-	
-	        KeyActions.unpressKeys(keys);
+	        KeyActions.unpressAllKeys();
 	
 	        currentNote++;
 	      }
 	    } else {
-	      debugger;
 	      clearInterval(that.interval);
 	      delete that.interval;
 	    }
 	  }
 	
-	  this.interval = setInterval(playStep, 10);
+	  this.interval = setInterval(playStep, 1);
 	};
 	
 	module.exports = Track;

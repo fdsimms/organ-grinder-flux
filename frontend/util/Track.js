@@ -13,7 +13,7 @@ Track.prototype.startRecording = function () {
 };
 
 Track.prototype.addNotes = function (notes) {
-  notes = notes || KeyStore.all();
+  notes = notes;
   var timeslice = Date.now() - this.currentTime;
   var notesTimeslice = {timeslice: timeslice, notes: notes};
   this.roll.push(notesTimeslice);
@@ -36,34 +36,24 @@ Track.prototype.play = function () {
   function playStep () {
 
     if (currentNote < that.roll.length) {
+      // debugger
       // all notes in roll, ensure they are in KeyStore
       that.roll[currentNote].notes.forEach(function (note) {
         KeyActions.keyPressed(note);
       });
 
       if (Date.now() - playbackStartTime > that.roll[currentNote].timeslice) {
-        var nextNote = currentNote + 1;
-        var nextKeys = that.roll[nextNote].notes;
-        var keys = [];
-
-        that.roll[currentNote].notes.forEach(function (note) {
-          if (!nextKeys.includes(note)) {
-            keys.push(note);
-          }
-        });
-
-        KeyActions.unpressKeys(keys);
+        KeyActions.unpressAllKeys();
 
         currentNote++;
       }
     } else {
-      debugger
       clearInterval(that.interval);
       delete that.interval;
     }
   }
 
-  this.interval = setInterval(playStep, 10);
+  this.interval = setInterval(playStep, 1);
 };
 
 module.exports = Track;

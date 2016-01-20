@@ -18,11 +18,8 @@ var removeKey = function (key) {
   KeyStore.__emitChange();
 };
 
-var removeKeys = function (keys) {
-  keys.forEach(function (key) {
-    var idx = _currentKeys.indexOf(key);
-    _currentKeys.splice(idx, 1);
-  });
+var removeAllKeys = function () {
+  _currentKeys = [];
   KeyStore.__emitChange();
 };
 
@@ -35,8 +32,8 @@ KeyStore.__onDispatch = function (payload) {
     addKey(payload.noteName);
   } else if (payload.actionType === "REMOVE_KEY") {
     removeKey(payload.noteName);
-  } else if (payload.actionType === "REMOVE_KEYS") {
-    removeKeys(payload.keys);
+  } else if (payload.actionType === "REMOVE_ALL_KEYS") {
+    removeAllKeys();
   }
 };
 

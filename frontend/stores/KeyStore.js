@@ -6,9 +6,12 @@ var KeyStore = new Store(AppDispatcher);
 var _currentKeys = [];
 
 var addKey = function (key) {
-  _currentKeys.push(key);
-  KeyStore.__emitChange();
+  if (!_currentKeys.includes(key)) {
+    _currentKeys.push(key);
+    KeyStore.__emitChange();
+  }
 };
+
 
 var removeKey = function (key) {
   var idx = _currentKeys.indexOf(key);
@@ -16,8 +19,11 @@ var removeKey = function (key) {
   KeyStore.__emitChange();
 };
 
+KeyStore.all = function () {
+  return _currentKeys.slice();
+};
+
 KeyStore.__onDispatch = function (payload) {
-  debugger
   if (payload.actionType === "ADD_KEY") {
     addKey(payload.noteName);
   } else if (payload.actionType === "REMOVE_KEY") {

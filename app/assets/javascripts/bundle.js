@@ -50,8 +50,13 @@
 	ReactDOM = __webpack_require__(162);
 	Note = __webpack_require__(164);
 	KeyStore = __webpack_require__(167);
+	Organ = __webpack_require__(187);
 	
-	$(function () {});
+	$(function () {
+	  var content = document.getElementById('content');
+	
+	  ReactDOM.render(React.createElement(Organ, { className: 'group' }), content);
+	});
 
 /***/ },
 /* 1 */
@@ -20040,7 +20045,6 @@
 	
 	var KeyActions = {
 	  keyPressed: function (key) {
-	    debugger;
 	    AppDispatcher.dispatch({ noteName: key, actionType: "ADD_KEY" });
 	  },
 	
@@ -20063,8 +20067,10 @@
 	var _currentKeys = [];
 	
 	var addKey = function (key) {
-	  _currentKeys.push(key);
-	  KeyStore.__emitChange();
+	  if (!_currentKeys.includes(key)) {
+	    _currentKeys.push(key);
+	    KeyStore.__emitChange();
+	  }
 	};
 	
 	var removeKey = function (key) {
@@ -20073,8 +20079,11 @@
 	  KeyStore.__emitChange();
 	};
 	
+	KeyStore.all = function () {
+	  return _currentKeys.slice();
+	};
+	
 	KeyStore.__onDispatch = function (payload) {
-	  debugger;
 	  if (payload.actionType === "ADD_KEY") {
 	    addKey(payload.noteName);
 	  } else if (payload.actionType === "REMOVE_KEY") {
@@ -26531,6 +26540,108 @@
 	
 	module.exports = FluxMixinLegacy;
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ },
+/* 185 */
+/***/ function(module, exports, __webpack_require__) {
+
+	React = __webpack_require__(6);
+	ReactDOM = __webpack_require__(162);
+	var KeyStore = __webpack_require__(167);
+	var TONES = __webpack_require__(186);
+	
+	var Key = React.createClass({
+	  displayName: 'Key',
+	
+	  getInitialState: function () {
+	    return {
+	      isPressedDown: false
+	    };
+	  },
+	
+	  componentDidMount: function () {
+	    var noteName = this.props.noteName;
+	    var freq = TONES[noteName];
+	    this.note = new Note(freq);
+	    this.note.oscillatorNode.type = "square";
+	    KeyStore.addListener(this._keysChanged);
+	  },
+	
+	  _keysChanged: function () {
+	    if (KeyStore.all().includes(this.props.noteName)) {
+	      this.setState({ isPressedDown: true });
+	      this.note.start();
+	    } else {
+	      this.setState({ isPressedDown: false });
+	      this.note.stop();
+	    }
+	  },
+	
+	  componentWillUnmount: function () {
+	    KeyStore.remove(this._keysChanged);
+	  },
+	
+	  render: function () {
+	    var className = "";
+	
+	    if (this.state.isPressedDown) {
+	      className = "pressedDown";
+	    }
+	
+	    return React.createElement(
+	      'li',
+	      { className: className },
+	      this.props.noteName
+	    );
+	  }
+	});
+	
+	module.exports = Key;
+
+/***/ },
+/* 186 */
+/***/ function(module, exports) {
+
+	var TONES = {
+	  C4: 261.63,
+	  D4: 293.66,
+	  E4: 329.63,
+	  F4: 349.23,
+	  G4: 392,
+	  A4: 440,
+	  B4: 493.88,
+	  C5: 523.25
+	};
+	
+	module.exports = TONES;
+
+/***/ },
+/* 187 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var React = __webpack_require__(6),
+	    ReactDOM = __webpack_require__(162),
+	    Key = __webpack_require__(185),
+	    Tones = __webpack_require__(186);
+	
+	var Organ = React.createClass({
+	  displayName: 'Organ',
+	
+	  render: function () {
+	
+	    var keys = Object.keys(Tones).map(function (noteName, idx) {
+	      return React.createElement(Key, { noteName: noteName, key: idx });
+	    });
+	
+	    return React.createElement(
+	      'ul',
+	      { className: 'organ' },
+	      keys
+	    );
+	  }
+	});
+	
+	module.exports = Organ;
 
 /***/ }
 /******/ ]);

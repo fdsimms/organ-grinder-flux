@@ -1,0 +1,48 @@
+html, body, div, ul, li, h1 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  text-align: inherit;
+  background: transparent;
+  font: inherit;
+  text-decoration: none;
+  box-sizing: inherit;
+}
+
+
+.group:before {
+  clear: both;
+  display: block;
+  content: "";
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 32px;
+  color: blue;
+}
+
+ul {
+  list-style: none;
+}
+
+ul.organ {
+  width: 210px;
+  margin: auto;
+  display: block;
+  border: 1px solid brown;
+}
+
+ul > li {
+  float: left;
+  height: 100px;
+  width: 20px;
+  border: 3px solid gray;
+  border-style: outset;
+}
+
+.pressedDown {
+  border-style: inset;
+}

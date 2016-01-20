@@ -2,7 +2,6 @@ var AppDispatcher = require('../dispatcher/dispatcher');
 
 var KeyActions = {
   keyPressed: function (key) {
-    debugger
     AppDispatcher.dispatch({ noteName: key, actionType: "ADD_KEY" });
   },
 
